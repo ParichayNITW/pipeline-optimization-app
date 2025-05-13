@@ -8,7 +8,7 @@ import os
 os.environ['NEOS_EMAIL'] = 'parichay.nitwarangal@gmail.com'
 
 # Function to load and solve the Pyomo model
-@st.cache_data
+# @st.cache_data
 def solve_model(FLOW, KV, rho, SFC_J, SFC_R, SFC_S, RateDRA, Price_HSD):
     model = pyo.ConcreteModel()
 
