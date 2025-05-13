@@ -1,86 +1,189 @@
 # pipeline_optimization_app.py
 
 import streamlit as st
+import builtins, sys, importlib, io
 import pandas as pd
-from pipeline_model import solve_pipeline
+import os
 
-st.set_page_config(page_title="Pipeline Operations Optimization", layout="wide")
-st.title("Mixed Integer Non‐Linear Convex Optimization of Pipeline Operations")
+st.set_page_config(
+    page_title="Pipeline Operations Optimization",
+    layout="wide",
+)
+st.title("MIXED INTEGER NON LINEAR CONVEX OPTIMIZATION OF PIPELINE OPERATIONS")
 
-# ---- Sidebar inputs ----
+# Sidebar inputs
 with st.sidebar:
     st.header("Input Parameters")
-    FLOW      = st.number_input("Flow rate (KL/Hr)",                   value=5700.0, step=100.0)
+    FLOW      = st.number_input("Flow rate (KL/Hr)",                   value=5700.0, step=100.0, format="%.1f")
     KV        = st.number_input("Kinematic Viscosity at 15 °C (cSt)",   value=6.45, step=0.01, format="%.2f")
-    rho       = st.number_input("Density at 15 °C (kg/m³)",             value=834.0, step=1.0)
-    SFC_J     = st.number_input("SFC at Jamnagar (gm/bhp/hr)",          value=155.0, step=1.0)
-    SFC_R     = st.number_input("SFC at Rajkot (gm/bhp/hr)",            value=160.0, step=1.0)
-    SFC_S     = st.number_input("SFC at Surendranagar (gm/bhp/hr)",     value=165.0, step=1.0)
-    Rate_DRA  = st.number_input("DRA unit rate (Rs/Litre)",             value=300.0, step=1.0)
-    Price_HSD = st.number_input("HSD unit rate (Rs/Litre)",             value=90.0,  step=1.0)
+    rho       = st.number_input("Density at 15 °C (kg/m³)",             value=834.0, step=1.0, format="%.1f")
+    SFC_J     = st.number_input("SFC at Jamnagar (gm/bhp/hr)",          value=155.0, step=1.0, format="%.1f")
+    SFC_R     = st.number_input("SFC at Rajkot (gm/bhp/hr)",            value=160.0, step=1.0, format="%.1f")
+    SFC_S     = st.number_input("SFC at Surendranagar (gm/bhp/hr)",     value=165.0, step=1.0, format="%.1f")
+    Rate_DRA  = st.number_input("DRA unit rate (₹/Litre)",             value=300.0, step=1.0, format="%.1f")
+    Price_HSD = st.number_input("HSD unit rate (₹/Litre)",             value=90.0,  step=1.0, format="%.1f")
+    go        = st.button("Run Optimization")
 
-    run = st.button("Run Optimization")
+def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
+    """
+    This will:
+      1) Monkey-patch input() so your existing pipeline_model.py picks up
+         these values instead of prompting.
+      2) Capture all of its print() output.
+      3) Parse the lines of the form “... = VALUE” into a dict.
+    """
+    # Prepare the 8 inputs in the same order your model expects:
+    vals = list(map(str, [
+        flow, kv, rho,
+        sfc_j, sfc_r, sfc_s,
+        rate_dra, price_hsd
+    ]))
+    it = iter(vals)
 
-if run:
-    with st.spinner("Solving… this may take a minute or two"):
-        results = solve_pipeline(
+    # Override built-in input()
+    orig_input = builtins.input
+    builtins.input = lambda prompt="": next(it)
+
+    # Redirect stdout to capture prints
+    buf = io.StringIO()
+    orig_stdout = sys.stdout
+    sys.stdout = buf
+
+    try:
+        # Reload & execute your original model
+        import pipeline_model
+        importlib.reload(pipeline_model)
+    finally:
+        # Restore
+        builtins.input = orig_input
+        sys.stdout = orig_stdout
+
+    # Parse lines like "The value of Residual Head at Jamnagar =  123.45"
+    results = {}
+    for line in buf.getvalue().splitlines():
+        if "=" in line:
+            key, val = line.split("=", 1)
+            # normalize key into a Python-friendly name
+            k = (
+                key.strip()
+                   .lower()
+                   .replace("the value of ", "")
+                   .replace("optimum ", "")
+                   .replace(" at ", "_")
+                   .replace(" ", "_")
+                   .replace("%", "pct")
+                   .replace("/", "_")
+            )
+            try:
+                results[k] = float(val.strip())
+            except:
+                pass
+    return results
+
+if go:
+    with st.spinner("Solving… this can take a minute or two"):
+        res = solve_pipeline(
             FLOW, KV, rho,
             SFC_J, SFC_R, SFC_S,
             Rate_DRA, Price_HSD
         )
-    st.success("Optimization complete!")
+    st.success("Done!")
 
-    # Build output matrix
+    # Build your table exactly as in the spec
     stations = ["Vadinar","Jamnagar","Rajkot","Chotila","Surendranagar","Viramgam"]
-    data = {
+    df = pd.DataFrame({
         "Power Cost (INR/day)": [
-            results["OF_POWER_1"], results["OF_POWER_2"], results["OF_POWER_3"],
-            None,                 results["OF_POWER_4"], None
+            res.get("power_cost_at_vadinar"),
+            res.get("power_cost_at_jamnagar"),
+            res.get("power_cost_at_rajkot"),
+            None,
+            res.get("power_cost_at_surendranagar"),
+            None
         ],
         "DRA Cost (INR/day)": [
-            results["OF_DRA_1"], results["OF_DRA_2"], results["OF_DRA_3"],
-            None,                results["OF_DRA_4"], None
+            res.get("dra_cost_at_vadinar"),
+            res.get("dra_cost_at_jamnagar"),
+            res.get("dra_cost_at_rajkot"),
+            None,
+            res.get("dra_cost_at_surendranagar"),
+            None
         ],
         "Residual Head (mcl)": [
-            results["RH1"], results["RH2"], results["RH3"],
-            results["RH4"], results["RH5"], results["RH6"]
+            res.get("residual_head_at_vadinar"),
+            res.get("residual_head_at_jamnagar"),
+            res.get("residual_head_at_rajkot"),
+            res.get("residual_head_at_chotila"),
+            res.get("residual_head_at_surendranagar"),
+            res.get("residual_head_at_viramgam")
         ],
         "SDH (mcl)": [
-            results["SDHA_1"], results["SDHA_2"], results["SDHA_3"],
-            results["SDHA_4"], results["SDHA_5"], None
+            res.get("sdh_at_vadinar"),
+            res.get("sdh_at_jamnagar"),
+            res.get("sdh_at_rajkot"),
+            res.get("sdh_at_chotila"),
+            res.get("sdh_at_surendranagar"),
+            None
         ],
         "No. Pumps": [
-            results["NOP1"], results["NOP2"], results["NOP3"],
-            None,           results["NOP5"], None
+            res.get("no_of_operating_pumps_at_vadinar"),
+            res.get("no_of_operating_pumps_at_jamnagar"),
+            res.get("no_of_operating_pumps_at_rajkot"),
+            None,
+            res.get("no_of_operating_pumps_at_surendranagar"),
+            None
         ],
         "Speed (rpm)": [
-            results["N1"], results["N2"], results["N3"],
-            None,         results["N5"], None
+            res.get("the_operating_speed_of_each_pump_at_vadinar"),
+            res.get("the_operating_speed_of_each_pump_at_jamnagar"),
+            res.get("the_operating_speed_of_each_pump_at_rajkot"),
+            None,
+            res.get("the_operating_speed_of_each_pump_at_surendranagar"),
+            None
         ],
         "Efficiency (%)": [
-            results["EFFP1"], results["EFFP2"], results["EFFP3"],
-            None,             results["EFFP5"], None
+            res.get("value_of_pump_efficiency_at_vadinar"),
+            res.get("value_of_pump_efficiency_at_jamnagar"),
+            res.get("value_of_pump_efficiency_at_rajkot"),
+            None,
+            res.get("value_of_pump_efficiency_at_surendranagar"),
+            None
         ],
         "Drag Reduction (%)": [
-            results["DR1"], results["DR2"], results["DR3"],
-            None,           results["DR4"], None
+            res.get("percentage_drag_reduction_at_vadinar"),
+            res.get("percentage_drag_reduction_at_jamnagar"),
+            res.get("percentage_drag_reduction_at_rajkot"),
+            None,
+            res.get("percentage_drag_reduction_at_surendranagar"),
+            None
         ],
-        "Reynolds No.": [
-            results["Re1"], results["Re2"], results["Re3"],
-            results["Re5"], results["Re5"], None
+        "Reynold's No.": [
+            res.get("reynolds_no_at_vadinar"),
+            res.get("reynolds_no_at_jamnagar"),
+            res.get("reynolds_no_at_rajkot"),
+            res.get("reynolds_no_at_chotila"),
+            res.get("reynolds_no_at_surendranagar"),
+            None
         ],
         "Head Loss (dynamic)": [
-            results["DH1"], results["DH2"], results["DH3"],
-            results["DH5"], results["DH5"], None
+            res.get("head_loss_dynamic_at_vadinar"),
+            res.get("head_loss_dynamic_at_jamnagar"),
+            res.get("head_loss_dynamic_at_rajkot"),
+            res.get("head_loss_dynamic_at_chotila"),
+            res.get("head_loss_dynamic_at_surendranagar"),
+            None
         ],
         "Velocity (m/s)": [
-            results["v1"], results["v2"], results["v3"],
-            results["v4"], results["v5"], results["v6"]
+            res.get("velocity_at_vadinar"),
+            res.get("velocity_at_jamnagar"),
+            res.get("velocity_at_rajkot"),
+            res.get("velocity_at_chotila"),
+            res.get("velocity_at_surendranagar"),
+            res.get("velocity_at_viramgam")
         ],
-    }
-    df = pd.DataFrame(data, index=stations)
-    st.subheader("Optimized Station‐Wise Results")
-    st.table(df.style.format("{:,.2f}").to_dict())  # format numbers to two decimals
+    }, index=stations)
 
-    # Show total operating cost separately
-    st.markdown(f"### Total Operating Cost (INR/day): **{results['Total_Cost']:,.0f}**")
+    st.subheader("Optimized Station‐Wise Results")
+    st.table(df.style.format("{:,.2f}"))
+
+    total = res.get("total_operating_cost_inr_day") or res.get("total_operating_cost_inr_day") 
+    st.markdown(f"### **Total Operating Cost (INR/day): {total:,.0f}**")
