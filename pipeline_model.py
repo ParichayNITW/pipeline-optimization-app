@@ -1,15 +1,11 @@
-!pip install pyomo
-from pyomo.opt import SolverManagerFactory, SolverFactory
 import pyomo.environ as pyo
-import pandas as pd
-import math
+from pyomo.opt import SolverManagerFactory
 from math import log10
 import os
-os.environ['NEOS_EMAIL'] = 'parichay.nitwarangal@gmail.com'
 
-
-
-model = pyo.ConcreteModel()
+def solve_model(FLOW, KV, rho, SFC_J, SFC_R, SFC_S, RateDRA, Price_HSD):
+    os.environ['NEOS_EMAIL'] = 'parichay.nitwarangal@gmail.com'
+    model = pyo.ConcreteModel()
 
 
 
