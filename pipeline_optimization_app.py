@@ -521,14 +521,10 @@ def solve_model(FLOW, KV, rho, SFC_J, SFC_R, SFC_S, RateDRA, Price_HSD):
     print('Optimum DRA cost at Surendranagar = ', OF_DRA_4())
     print('Value of Pump Efficiency at Surendranagar = ', EFFP5())
     
-    
-      
-        # (Due to length limitations, ensure you paste the full provided backend from opt.txt at this point)
-    
-        solver = SolverManagerFactory('neos')
-        results = solver.solve(model, opt='bonmin', tee=True)
-    
-        return model
+    # (Due to length limitations, ensure you paste the full provided backend from opt.txt at this point)
+    solver = SolverManagerFactory('neos')
+    results = solver.solve(model, opt='bonmin', tee=True)
+    return model
 
 # Streamlit UI
 st.set_page_config(page_title="Pipeline Optimization", layout="wide")
