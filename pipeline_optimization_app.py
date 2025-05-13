@@ -15,8 +15,8 @@ st.title("MIXED INTEGER NON LINEAR CONVEX OPTIMIZATION OF PIPELINE OPERATIONS")
 with st.sidebar:
     st.header("Input Parameters")
     FLOW      = st.number_input("Flow rate (KL/Hr)",                   value=5700.0, step=100.0, format="%.1f")
-    KV        = st.number_input("Kinematic Viscosity at 15 °C (cSt)",   value=6.45, step=0.01, format="%.2f")
-    rho       = st.number_input("Density at 15 °C (kg/m³)",             value=834.0, step=1.0, format="%.1f")
+    KV        = st.number_input("Kinematic Viscosity at 15 °C (cSt)",   value=6.45,  step=0.01, format="%.2f")
+    rho       = st.number_input("Density at 15 °C (kg/m³)",             value=834.0,  step=1.0, format="%.1f")
     SFC_J     = st.number_input("SFC at Jamnagar (gm/bhp/hr)",          value=155.0, step=1.0, format="%.1f")
     SFC_R     = st.number_input("SFC at Rajkot (gm/bhp/hr)",            value=160.0, step=1.0, format="%.1f")
     SFC_S     = st.number_input("SFC at Surendranagar (gm/bhp/hr)",     value=165.0, step=1.0, format="%.1f")
@@ -26,17 +26,15 @@ with st.sidebar:
 
 def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
     """
-    Monkey-patch input(), capture print(), reload your pipeline_model.py
+    Monkey-patch input(), capture print(), reload pipeline_model.py,
     and parse its outputs into a dict.
     """
     vals = list(map(str, [flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd]))
     it = iter(vals)
 
-    # patch input()
     orig_input = builtins.input
     builtins.input = lambda prompt="": next(it)
 
-    # capture stdout
     buf = io.StringIO()
     orig_stdout = sys.stdout
     sys.stdout = buf
@@ -48,7 +46,6 @@ def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
         builtins.input = orig_input
         sys.stdout = orig_stdout
 
-    # parse “key = value” lines
     results = {}
     for line in buf.getvalue().splitlines():
         if "=" in line:
@@ -60,8 +57,10 @@ def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
                     .replace(" ", "_")
                     .replace("%", "pct")
                     .replace("/", "_"))
-            try:    results[k] = float(val.strip())
-            except: pass
+            try:
+                results[k] = float(val.strip())
+            except:
+                pass
     return results
 
 if go:
@@ -71,7 +70,7 @@ if go:
                              Rate_DRA, Price_HSD)
     st.success("Done!")
 
-    # build the DataFrame
+    # Build DataFrame
     stations = ["Vadinar","Jamnagar","Rajkot","Chotila","Surendranagar","Viramgam"]
     df = pd.DataFrame({
         "Power Cost (INR/day)": [
@@ -164,9 +163,9 @@ if go:
         ],
     }, index=stations)
 
-    # <<< Here’s the only change >>>
+    # ←— FIXED HERE —→
     st.subheader("Optimized Station-Wise Results")
-    st.dataframe(df.style.format("{:,.2f}"), height=400)
+    st.table(df.round(2))
 
     total = res.get("total_operating_cost_inr_day")
     st.markdown(f"### **Total Operating Cost (INR/day): {total:,.0f}**")
