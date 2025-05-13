@@ -396,20 +396,18 @@ def solve_model(FLOW, KV, rho, SFC_J, SFC_R, SFC_S, RateDRA, Price_HSD):
     
     # Objective Function
     # Power and DRA Cost of Vadinar MLPUs:
-    OF_POWER_1= (rho1*FLOW1*9.81*TDHA_PUMP_1*NOP1)/(3600*1000*EFFP1*EFFM1)*24*Rate1
-    OF_DRA_1= (PPM1/10**6)*FLOW1*24*1000*Rate_DRA
+    model.OF_POWER_1 = pyo.Expression(expr=(rho1*FLOW1*9.81*TDHA_PUMP_1*NOP1)/(3600*1000*EFFP1*EFFM1)*24*Rate1)
+    model.OF_DRA_1 = pyo.Expression(expr=(PPM1/10**6)*FLOW1*24*1000*Rate_DRA)
     
-    # Fuel and DRA Cost of Jamnagar MLPUs:
-    OF_POWER_2= ((rho2*FLOW2*9.81*TDHA_PUMP_2*NOP2)/(3600*1000*EFFP2*EFFM2))*(SFC2*1.34102/1000/820)*1000*24*Price_HSD
-    OF_DRA_2= (PPM2/10**6)*FLOW2*24*1000*Rate_DRA
+    model.OF_POWER_2 = pyo.Expression(expr=((rho2*FLOW2*9.81*TDHA_PUMP_2*NOP2)/(3600*1000*EFFP2*EFFM2))*(SFC2*1.34102/1000/820)*1000*24*Price_HSD)
+    model.OF_DRA_2 = pyo.Expression(expr=(PPM2/10**6)*FLOW2*24*1000*Rate_DRA)
     
-    # Fuel and DRA Cost of Rajkot MLPUs:
-    OF_POWER_3= ((rho3*FLOW3*9.81*TDHA_PUMP_3*NOP3)/(3600*1000*EFFP3*EFFM3))*(SFC3*1.34102/1000/820)*1000*24*Price_HSD
-    OF_DRA_3= (PPM3/10**6)*FLOW3*24*1000*Rate_DRA
+    model.OF_POWER_3 = pyo.Expression(expr=((rho3*FLOW3*9.81*TDHA_PUMP_3*NOP3)/(3600*1000*EFFP3*EFFM3))*(SFC3*1.34102/1000/820)*1000*24*Price_HSD)
+    model.OF_DRA_3 = pyo.Expression(expr=(PPM3/10**6)*FLOW3*24*1000*Rate_DRA)
     
-    # Fuel and DRA Cost of Surendranagar MLPUs:
-    OF_POWER_4= ((rho5*FLOW5*9.81*TDHA_PUMP_5*NOP5)/(3600*1000*EFFP5*EFFM5))*(SFC5*1.34102/1000/820)*1000*24*Price_HSD
-    OF_DRA_4= (PPM5/10**6)*FLOW5*24*1000*Rate_DRA
+    model.OF_POWER_4 = pyo.Expression(expr=((rho5*FLOW5*9.81*TDHA_PUMP_5*NOP5)/(3600*1000*EFFP5*EFFM5))*(SFC5*1.34102/1000/820)*1000*24*Price_HSD)
+    model.OF_DRA_4 = pyo.Expression(expr=(PPM5/10**6)*FLOW5*24*1000*Rate_DRA)
+
     
     def Objective_Rule(model):
       return (OF_POWER_1 + OF_DRA_1 + OF_POWER_2 + OF_DRA_2 + OF_POWER_3 + OF_DRA_3 + OF_POWER_4 + OF_DRA_4)
