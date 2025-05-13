@@ -14,49 +14,55 @@ st.title("MIXED INTEGER NON LINEAR CONVEX OPTIMIZATION OF PIPELINE OPERATIONS")
 # Sidebar inputs
 with st.sidebar:
     st.header("Input Parameters")
-    FLOW      = st.number_input("Flow rate (KL/Hr)",                   value=5700.0, step=100.0, format="%.1f")
-    KV        = st.number_input("Kinematic Viscosity at 15 °C (cSt)",   value=6.45,  step=0.01, format="%.2f")
-    rho       = st.number_input("Density at 15 °C (kg/m³)",             value=834.0,  step=1.0, format="%.1f")
-    SFC_J     = st.number_input("SFC at Jamnagar (gm/bhp/hr)",          value=155.0, step=1.0, format="%.1f")
-    SFC_R     = st.number_input("SFC at Rajkot (gm/bhp/hr)",            value=160.0, step=1.0, format="%.1f")
-    SFC_S     = st.number_input("SFC at Surendranagar (gm/bhp/hr)",     value=165.0, step=1.0, format="%.1f")
-    Rate_DRA  = st.number_input("DRA unit rate (₹/Litre)",             value=300.0, step=1.0, format="%.1f")
-    Price_HSD = st.number_input("HSD unit rate (₹/Litre)",             value=90.0,  step=1.0, format="%.1f")
+    FLOW      = st.number_input("Flow rate (KL/Hr)",                 value=5700.0, step=100.0, format="%.1f")
+    KV        = st.number_input("Kinematic Viscosity at 15 °C (cSt)", value=6.45,  step=0.01, format="%.2f")
+    rho       = st.number_input("Density at 15 °C (kg/m³)",           value=834.0,  step=1.0, format="%.1f")
+    SFC_J     = st.number_input("SFC at Jamnagar (gm/bhp/hr)",        value=155.0, step=1.0, format="%.1f")
+    SFC_R     = st.number_input("SFC at Rajkot (gm/bhp/hr)",          value=160.0, step=1.0, format="%.1f")
+    SFC_S     = st.number_input("SFC at Surendranagar (gm/bhp/hr)",   value=165.0, step=1.0, format="%.1f")
+    Rate_DRA  = st.number_input("DRA unit rate (₹/Litre)",           value=300.0, step=1.0, format="%.1f")
+    Price_HSD = st.number_input("HSD unit rate (₹/Litre)",           value=90.0,  step=1.0, format="%.1f")
     go        = st.button("Run Optimization")
 
 def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
     """
     Monkey-patch input(), capture print(), reload pipeline_model.py,
-    and parse its outputs into a dict.
+    and parse its outputs into a dict (stripping out parentheses).
     """
     vals = list(map(str, [flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd]))
-    it = iter(vals)
+    it   = iter(vals)
 
+    # patch input()
     orig_input = builtins.input
     builtins.input = lambda prompt="": next(it)
 
+    # capture stdout
     buf = io.StringIO()
     orig_stdout = sys.stdout
-    sys.stdout = buf
+    sys.stdout    = buf
 
     try:
         import pipeline_model
         importlib.reload(pipeline_model)
     finally:
         builtins.input = orig_input
-        sys.stdout = orig_stdout
+        sys.stdout    = orig_stdout
 
+    # parse “key = value” lines, stripping spaces, slashes, % and () 
     results = {}
     for line in buf.getvalue().splitlines():
         if "=" in line:
             key, val = line.split("=", 1)
             k = (key.strip().lower()
-                    .replace("the value of ", "")
-                    .replace("optimum ", "")
-                    .replace(" at ", "_")
-                    .replace(" ", "_")
-                    .replace("%", "pct")
-                    .replace("/", "_"))
+                 .replace("the value of ", "")
+                 .replace("optimum ", "")
+                 .replace(" at ", "_")
+                 .replace(" ", "_")
+                 .replace("%", "pct")
+                 .replace("/", "_")
+                 .replace("(", "")
+                 .replace(")", "")
+            )
             try:
                 results[k] = float(val.strip())
             except:
@@ -163,9 +169,12 @@ if go:
         ],
     }, index=stations)
 
-    # ←— FIXED HERE —→
     st.subheader("Optimized Station-Wise Results")
     st.table(df.round(2))
 
+    # Safely format total even if it's missing
     total = res.get("total_operating_cost_inr_day")
-    st.markdown(f"### **Total Operating Cost (INR/day): {total:,.0f}**")
+    if total is not None:
+        st.markdown(f"### **Total Operating Cost (INR/day): {total:,.0f}**")
+    else:
+        st.markdown("### **Total Operating Cost (INR/day): N/A**")
