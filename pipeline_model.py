@@ -465,52 +465,52 @@ def solve_model(FLOW, KV, rho, SFC_J, SFC_R, SFC_S, RateDRA, Price_HSD):
     results = solver.solve(model, opt='bonmin', tee=True)
     results.write()
 
-print(results)
-print('Total Optimum Cost= ', model.Objf())
-print('The No. of operating pumps at Vadinar = ', NOP1())
-print('The percentage Drag reduction at Vadinar = ', DR1())
-print('The operating speed of each Pump at Vadinar = ', N1())
-print('The value of Residual Head at Jamnagar = ', RH2())
-print('The value of SDH at Vadinar = ', SDHA_1())
-print('Head developed by each pump at Vadinar = ', TDHA_PUMP_1())
-print('Optimum Power Cost at Vadinar = ', OF_POWER_1())
-print('Optimum DRA cost at Vadinar = ', OF_DRA_1())
-print('Value of Pump Efficiency at Vadinar = ', EFFP1())
-
-
-print('The No. of operating pumps at Jamnagar = ', NOP2())
-print('The percentage Drag reduction at Jamnagar = ', DR2())
-print('The operating speed of each Pump at Jamnagar = ', N2())
-print('The value of Residual Head at Rajkot = ', RH3())
-print('The value of SDH at Jamnagar = ', SDHA_2())
-print('Head developed by each pump at Jamnagar = ', TDHA_PUMP_2())
-print('Optimum Power Cost at Jamnagar = ', OF_POWER_2())
-print('Optimum DRA cost at Jamnagar = ', OF_DRA_2())
-print('Value of Pump Efficiency at Jamnagar = ', EFFP2())
-
-
-
-print('The No. of operating pumps at Rajkot = ', NOP3())
-print('The percentage Drag reduction at Rajkot = ', DR3())
-print('The operating speed of each Pump at Rajkot = ', N3())
-print('The value of Residual Head at Chotila = ', RH4())
-print('The value of SDH at Rajkot = ', SDHA_3())
-print('Head developed by each pump at Rajkot = ', TDHA_PUMP_3())
-print('Optimum Power Cost at Rajkot = ', OF_POWER_3())
-print('Optimum DRA cost at Rajkot = ', OF_DRA_3())
-print('Value of Pump Efficiency at Rajkot = ', EFFP3())
-
-
-print('The value of Residual Head at Surendranagar = ', RH5())
-
-
-print('The No. of operating pumps at Surendranagar = ', NOP5())
-print('The percentage Drag reduction at Surendranagar = ', DR4())
-print('The operating speed of each Pump at Surendranagar = ', N5())
-print('The value of Residual Head at Viramgam = ', RH6())
-print('The value of SDH at Surendranagar = ', SDHA_5())
-print('Head developed by each pump at Surendranagar = ', TDHA_PUMP_5())
-print('Optimum Power Cost at Surendranagar = ', OF_POWER_4())
-print('Optimum DRA cost at Surendranagar = ', OF_DRA_4())
-print('Value of Pump Efficiency at Surendranagar = ', EFFP5())
+    print(results)
+    print('Total Optimum Cost= ', model.Objf())
+    print('The No. of operating pumps at Vadinar = ', NOP1())
+    print('The percentage Drag reduction at Vadinar = ', DR1())
+    print('The operating speed of each Pump at Vadinar = ', N1())
+    print('The value of Residual Head at Jamnagar = ', RH2())
+    print('The value of SDH at Vadinar = ', SDHA_1())
+    print('Head developed by each pump at Vadinar = ', TDHA_PUMP_1())
+    print('Optimum Power Cost at Vadinar = ', OF_POWER_1())
+    print('Optimum DRA cost at Vadinar = ', OF_DRA_1())
+    print('Value of Pump Efficiency at Vadinar = ', EFFP1())
+    
+    
+    print('The No. of operating pumps at Jamnagar = ', NOP2())
+    print('The percentage Drag reduction at Jamnagar = ', DR2())
+    print('The operating speed of each Pump at Jamnagar = ', N2())
+    print('The value of Residual Head at Rajkot = ', RH3())
+    print('The value of SDH at Jamnagar = ', SDHA_2())
+    print('Head developed by each pump at Jamnagar = ', TDHA_PUMP_2())
+    print('Optimum Power Cost at Jamnagar = ', OF_POWER_2())
+    print('Optimum DRA cost at Jamnagar = ', OF_DRA_2())
+    print('Value of Pump Efficiency at Jamnagar = ', EFFP2())
+    
+    
+    
+    print('The No. of operating pumps at Rajkot = ', NOP3())
+    print('The percentage Drag reduction at Rajkot = ', DR3())
+    print('The operating speed of each Pump at Rajkot = ', N3())
+    print('The value of Residual Head at Chotila = ', RH4())
+    print('The value of SDH at Rajkot = ', SDHA_3())
+    print('Head developed by each pump at Rajkot = ', TDHA_PUMP_3())
+    print('Optimum Power Cost at Rajkot = ', OF_POWER_3())
+    print('Optimum DRA cost at Rajkot = ', OF_DRA_3())
+    print('Value of Pump Efficiency at Rajkot = ', EFFP3())
+    
+    
+    print('The value of Residual Head at Surendranagar = ', RH5())
+    
+    
+    print('The No. of operating pumps at Surendranagar = ', NOP5())
+    print('The percentage Drag reduction at Surendranagar = ', DR4())
+    print('The operating speed of each Pump at Surendranagar = ', N5())
+    print('The value of Residual Head at Viramgam = ', RH6())
+    print('The value of SDH at Surendranagar = ', SDHA_5())
+    print('Head developed by each pump at Surendranagar = ', TDHA_PUMP_5())
+    print('Optimum Power Cost at Surendranagar = ', OF_POWER_4())
+    print('Optimum DRA cost at Surendranagar = ', OF_DRA_4())
+    print('Value of Pump Efficiency at Surendranagar = ', EFFP5())
 
