@@ -26,70 +26,52 @@ with st.sidebar:
 
 def solve_pipeline(flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd):
     """
-    This will:
-      1) Monkey-patch input() so your existing pipeline_model.py picks up
-         these values instead of prompting.
-      2) Capture all of its print() output.
-      3) Parse the lines of the form “... = VALUE” into a dict.
+    Monkey-patch input(), capture print(), reload your pipeline_model.py
+    and parse its outputs into a dict.
     """
-    # Prepare the 8 inputs in the same order your model expects:
-    vals = list(map(str, [
-        flow, kv, rho,
-        sfc_j, sfc_r, sfc_s,
-        rate_dra, price_hsd
-    ]))
+    vals = list(map(str, [flow, kv, rho, sfc_j, sfc_r, sfc_s, rate_dra, price_hsd]))
     it = iter(vals)
 
-    # Override built-in input()
+    # patch input()
     orig_input = builtins.input
     builtins.input = lambda prompt="": next(it)
 
-    # Redirect stdout to capture prints
+    # capture stdout
     buf = io.StringIO()
     orig_stdout = sys.stdout
     sys.stdout = buf
 
     try:
-        # Reload & execute your original model
         import pipeline_model
         importlib.reload(pipeline_model)
     finally:
-        # Restore
         builtins.input = orig_input
         sys.stdout = orig_stdout
 
-    # Parse lines like "The value of Residual Head at Jamnagar =  123.45"
+    # parse “key = value” lines
     results = {}
     for line in buf.getvalue().splitlines():
         if "=" in line:
             key, val = line.split("=", 1)
-            # normalize key into a Python-friendly name
-            k = (
-                key.strip()
-                   .lower()
-                   .replace("the value of ", "")
-                   .replace("optimum ", "")
-                   .replace(" at ", "_")
-                   .replace(" ", "_")
-                   .replace("%", "pct")
-                   .replace("/", "_")
-            )
-            try:
-                results[k] = float(val.strip())
-            except:
-                pass
+            k = (key.strip().lower()
+                    .replace("the value of ", "")
+                    .replace("optimum ", "")
+                    .replace(" at ", "_")
+                    .replace(" ", "_")
+                    .replace("%", "pct")
+                    .replace("/", "_"))
+            try:    results[k] = float(val.strip())
+            except: pass
     return results
 
 if go:
     with st.spinner("Solving… this can take a minute or two"):
-        res = solve_pipeline(
-            FLOW, KV, rho,
-            SFC_J, SFC_R, SFC_S,
-            Rate_DRA, Price_HSD
-        )
+        res = solve_pipeline(FLOW, KV, rho,
+                             SFC_J, SFC_R, SFC_S,
+                             Rate_DRA, Price_HSD)
     st.success("Done!")
 
-    # Build your table exactly as in the spec
+    # build the DataFrame
     stations = ["Vadinar","Jamnagar","Rajkot","Chotila","Surendranagar","Viramgam"]
     df = pd.DataFrame({
         "Power Cost (INR/day)": [
@@ -182,8 +164,9 @@ if go:
         ],
     }, index=stations)
 
-    st.subheader("Optimized Station‐Wise Results")
-    st.table(df.style.format("{:,.2f}"))
+    # <<< Here’s the only change >>>
+    st.subheader("Optimized Station-Wise Results")
+    st.dataframe(df.style.format("{:,.2f}"), height=400)
 
-    total = res.get("total_operating_cost_inr_day") or res.get("total_operating_cost_inr_day") 
+    total = res.get("total_operating_cost_inr_day")
     st.markdown(f"### **Total Operating Cost (INR/day): {total:,.0f}**")
